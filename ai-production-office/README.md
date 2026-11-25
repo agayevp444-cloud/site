@@ -41,20 +41,21 @@ Homebrew yoxdursa, əvvəlcə onu quraşdırın: https://brew.sh
 
 ## 2. Quraşdırma
 
-### Sürətli yol (bir əmr)
+### Sürətli yol (ən asan)
+
+Terminalı açın (Spotlight: `⌘ + Space` → "Terminal") və bu əmri yapışdırın:
 
 ```bash
-cd ai-production-office
-./start.sh
+git clone -b claude/hopeful-ramanujan-llf5pv --depth 1 https://github.com/agayevp444-cloud/site.git ilham && cd ilham/ai-production-office && ./start.sh
 ```
 
-İlk dəfə işə saldıqda skript bunları edir:
-1. `backend/.venv` virtual mühitini yaradır və Python paketlərini quraşdırır.
-2. `backend/.env.example` faylını `backend/.env` adı ilə kopyalayır.
-3. Frontend paketlərini (`npm install`) quraşdırır.
-4. Backendi (http://localhost:8000) və ofisi (http://localhost:3000) işə salır, sonra brauzeri açır.
+Skript sizdən yalnız **API açarını** soruşacaq. Onu yapışdırıb Enter basın. Yazdığınız simvollar ekranda görünmür, bu normaldır. Qalan hər şeyi skript özü edir:
+1. Python və frontend paketlərini quraşdırır.
+2. Açarı `backend/.env` faylına yazır (`.env` faylını əl ilə açmağa ehtiyac yoxdur).
+3. Studiyanı işə salır və brauzerdə http://localhost:3000 ünvanını açır.
 
-> İlk işə salmadan sonra `backend/.env` faylına API açarınızı yazın (aşağıya baxın) və `./start.sh` əmrini yenidən icra edin.
+Növbəti dəfələr üçün Finder-də `ai-production-office` qovluğundakı **İLHAM.command** faylına iki dəfə klikləmək kifayətdir.
+Açarı dəyişmək lazım olsa, `backend/.env` faylını silin və skripti yenidən işə salın.
 
 Dayandırmaq üçün terminalda `Ctrl + C` basın.
 

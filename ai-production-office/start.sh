@@ -13,7 +13,26 @@ if [ ! -d backend/.venv ]; then
   python3 -m venv backend/.venv
 fi
 backend/.venv/bin/pip install -q -r backend/requirements.txt
-[ -f backend/.env ] || { cp backend/.env.example backend/.env; echo "⚠ backend/.env yaradıldı - ANTHROPIC_API_KEY daxil edin."; }
+[ -f backend/.env ] || cp backend/.env.example backend/.env
+
+# API açarı yoxdursa, onu ekranda göstərmədən soruşub .env faylına yazırıq.
+if ! grep -qE '^ANTHROPIC_API_KEY=.+' backend/.env; then
+  echo ""
+  echo "🔑 Anthropic API açarınızı yapışdırın (https://console.anthropic.com → API Keys)."
+  echo "   Yazdığınız simvollar ekranda görünməyəcək. Sonra Enter basın:"
+  read -rs KEY
+  echo ""
+  KEY="$(printf '%s' "$KEY" | tr -d '[:space:]')"
+  if [ -z "$KEY" ]; then
+    echo "Açar daxil edilmədi. Yenidən ./start.sh işə salın."; exit 1
+  fi
+  grep -vE '^ANTHROPIC_API_KEY=' backend/.env > backend/.env.tmp || true
+  { echo "ANTHROPIC_API_KEY=$KEY"; cat backend/.env.tmp; } > backend/.env
+  rm -f backend/.env.tmp
+  chmod 600 backend/.env
+  unset KEY
+  echo "✓ Açar backend/.env faylına yazıldı."
+fi
 
 # --- frontend
 if [ ! -d frontend/node_modules ]; then
