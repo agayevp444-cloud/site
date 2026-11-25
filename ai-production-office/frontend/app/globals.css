@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
-:root { color-scheme: dark; }
-html, body { height: 100%; margin: 0; background: #17110d; overflow: hidden;
+:root { color-scheme: light; }
+html, body { height: 100%; margin: 0; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #fbfaf8 0%, #eeece8 55%, #dedbd5 100%);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 
 .panel {
-  background: rgba(20, 16, 14, 0.82);
+  background: rgba(24, 24, 27, 0.84);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   backdrop-filter: blur(14px);

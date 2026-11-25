@@ -1,6 +1,25 @@
-# AI Production Office
+# ✦ İLHAM Studio — AI Prodüksiya Ofisi
 
-Real Claude AI agentlərindən ibarət virtual yaradıcı prodüksiya şirkəti. İzometrik 3D ofisdə hər işçinin öz masası, kompüteri və rolu var. Ekranda gördüyünüz hər hərəkət agentin **həqiqi** vəziyyətini əks etdirir.
+**İLHAM** real Claude AI agentlərindən ibarət virtual yaradıcı prodüksiya studiyasıdır. Adı "ilham" sözündən gəlir: hər layihə bir ilham qığılcımı ilə başlayır.
+
+Studiya üzən beton maket kimi qurulmuş izometrik 3D ofisdir. Ofisdə axan formalı taxta masalar, ağ LED xətlər, işıqlanan İLHAM loqosu, beton dibçəklərdə palmalar və hologram proyeksiya divarı var. Hər işçinin öz masası, kompüteri və rolu var. Ekranda gördüyünüz hər hərəkət agentin **həqiqi** vəziyyətini əks etdirir. Hologram divarın hərəkəti və rəngləri belə hazırda real işləyən agentlərin sayına bağlıdır.
+
+**Bütün proseslər Azərbaycan dilindədir:** interfeys, statuslar, işçilərin adları və vəzifələri, agentlərin sistem promptları. Agentlərin bütün nəticələri, mesajları, qeydləri və hesabatları da Azərbaycan dilində yazılır.
+
+### Komanda
+
+| İşçi | Vəzifə |
+|---|---|
+| Leyla Məmmədova | İcraçı Direktor (orkestrator) |
+| Orxan Əliyev | Kreativ Direktor |
+| Nigar Həsənova | Ssenarist |
+| Rauf Quliyev | Baş Operator |
+| Aysel Babayeva | Video Montajçı |
+| Tural İsmayılov | Kolorist |
+| Elvin Rzayev | Səs Dizayneri |
+| Günay Hüseynova | Tədqiqatçı |
+| Kamran Səfərov | Marketinq Meneceri |
+| Səbinə Abbasova | Keyfiyyətə Nəzarət Meneceri |
 
 - Backend: Python, FastAPI, SQLite (PostgreSQL ilə də işləyir), WebSocket, Anthropic Claude API
 - Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS, Three.js, React Three Fiber
@@ -90,10 +109,10 @@ Frontend başqa ünvanda olan backendə qoşulmalıdırsa, `frontend/.env.local`
 
 ## 4. İstifadə
 
-1. **+ New project** düyməsini basın və tapşırığı yazın (məsələn, "30 saniyəlik kino üslublu kofe reklamı").
-2. **İcraçı Direktor** iclas otağına gedir (status `IN MEETING`) və Claude ilə iş axını qurur: kim nə edəcək, hansı tapşırıq hansından asılıdır.
-3. Tapşırıqlar asılılıqlara görə növbəyə düşür. Asılılığı gözləyən işçi masasında `WAITING` statusunda oturur. İşə başlayan agent `THINKING` / `WORKING` statusuna keçir, monitorunda kod axır, başının üstündə canlı çıxış görünür.
-4. Bitmiş iş növbəti işçiyə uçan sənəd kimi ötürülür (`handoff`) və **Communication** lentində görünür.
+1. **+ Yeni layihə** düyməsini basın və tapşırığı yazın (məsələn, "30 saniyəlik kino üslublu kofe reklamı").
+2. **İcraçı Direktor** iclas otağına gedir (status `İCLASDA`) və Claude ilə iş axını qurur: kim nə edəcək, hansı tapşırıq hansından asılıdır.
+3. Tapşırıqlar asılılıqlara görə növbəyə düşür. Asılılığı gözləyən işçi masasında `GÖZLƏYİR` statusunda oturur. İşə başlayan agent `DÜŞÜNÜR` / `İŞLƏYİR` statusuna keçir, monitorunda iş görüntüsü axır, başının üstündə canlı çıxış görünür.
+4. Bitmiş iş növbəti işçiyə uçan sənəd kimi ötürülür (`handoff`) və **Ünsiyyət** lentində görünür.
 5. **Keyfiyyət Nəzarəti** bütün işləri yoxlayır, lazım olsa `request_revision` ilə geri qaytarır. Agent işi yenidən görür, sonra QC təkrar yoxlayır.
 6. Direktor yekun paketi tərtib edir. Sol paneldə **Review final package** düyməsi ilə onu təsdiqləyin və ya rəy yazıb rədd edin.
 
@@ -101,29 +120,29 @@ Frontend başqa ünvanda olan backendə qoşulmalıdırsa, `frontend/.env.local`
 
 | Əməliyyat | Harada |
 |---|---|
-| Layihə yaratmaq və ya ləğv etmək | Yuxarı panel → **+ New project**; sol panel → **Cancel project** |
-| İşçiyə birbaşa tapşırıq vermək | İşçiyə klikləyin → **assign** tabı |
-| Agenti dayandırmaq və ya davam etdirmək | İşçi paneli → **Pause agent / Resume agent** |
-| Tapşırığı dayandırmaq, təkrarlamaq, başqasına vermək | Tapşırığa klikləyin → **Stop / Retry / Reassign** |
-| Nəticəni təsdiqləmək və ya rədd etmək | Tapşırıq pəncərəsi → **Approve / Reject** |
-| Yeni işçi qəbul etmək | Yuxarı panel → **+ Hire** |
-| Rolu, sistem promptunu, alətləri dəyişmək | İşçi paneli → **profile** tabı |
-| API istifadəsi və xərclər | Yuxarı panel → **API usage** (işçi, layihə və model üzrə) |
-| İşçiyə mesaj göndərmək | İşçi paneli → **messages** tabı |
+| Layihə yaratmaq və ya ləğv etmək | Yuxarı panel → **+ Yeni layihə**; sol panel → **Layihəni ləğv et** |
+| İşçiyə birbaşa tapşırıq vermək | İşçiyə klikləyin → **tapşırıq ver** tabı |
+| Agenti dayandırmaq və ya davam etdirmək | İşçi paneli → **Agenti dayandır / Agenti davam etdir** |
+| Tapşırığı dayandırmaq, təkrarlamaq, başqasına vermək | Tapşırığa klikləyin → **Tapşırığı dayandır / Yenidən cəhd et / Təyin et** |
+| Nəticəni təsdiqləmək və ya rədd etmək | Tapşırıq pəncərəsi → **Təsdiqlə / Rədd et** |
+| Yeni işçi qəbul etmək | Yuxarı panel → **+ İşə götür** |
+| Rolu, sistem promptunu, alətləri dəyişmək | İşçi paneli → **profil** tabı |
+| API istifadəsi və xərclər | Yuxarı panel → **API istifadəsi** (işçi, layihə və model üzrə) |
+| İşçiyə mesaj göndərmək | İşçi paneli → **mesajlar** tabı |
 
 ### Statusların mənası (hamısı real vəziyyətdən gəlir)
 
 | Status | Nə vaxt | Ofisdə |
 |---|---|---|
-| IDLE | Aktiv tapşırığı yoxdur | İstirahət zonasında (divan, kofe barı) |
-| WAITING | Tapşırığı var, amma asılılığı və ya boş yer gözləyir | Masada, qolları çarpaz |
-| THINKING | Claude sorğusu gedir, model düşünür | Masada, əli çənəsində |
-| WORKING | Model cavab yazır və ya alət işlədir | Masada yazır, monitorda kod axır |
-| REVIEWING | QC yoxlaması və ya Direktorun yekun paketi | Sənəd oxuyur |
-| IN MEETING | Planlaşdırma iclası və ya `consult_colleague` ilə canlı görüş | İclas otağında |
-| COMPLETED | Tapşırığı bitirib, layihə hələ açıqdır | Masada, ekranda yaşıl işarə |
-| ERROR | API və ya tapşırıq xətası | Masada, ekranda qırmızı "!" işarəsi |
-| PAUSED | Sahib dayandırıb | Yerində donub qalır |
+| BOŞ (IDLE) | Aktiv tapşırığı yoxdur | İstirahət zonasında (divan, kofe barı) |
+| GÖZLƏYİR | Tapşırığı var, amma asılılığı və ya boş yer gözləyir | Masada, qolları çarpaz |
+| DÜŞÜNÜR | Claude sorğusu gedir, model düşünür | Masada, əli çənəsində |
+| İŞLƏYİR | Model cavab yazır və ya alət işlədir | Masada yazır, monitorda iş görüntüsü axır |
+| YOXLAYIR | QC yoxlaması və ya Direktorun yekun paketi | Sənəd oxuyur |
+| İCLASDA | Planlaşdırma iclası və ya `consult_colleague` ilə canlı görüş | İclas otağında |
+| TAMAMLADI | Tapşırığı bitirib, layihə hələ açıqdır | Masada, ekranda yaşıl işarə |
+| XƏTA | API və ya tapşırıq xətası | Masada, ekranda qırmızı "!" işarəsi |
+| DAYANDIRILIB | Sahib dayandırıb | Yerində donub qalır |
 
 Masa ilə iclas otağı və istirahət zonası arasında yeriş yalnız status dəyişəndə baş verir.
 
@@ -188,14 +207,14 @@ Testlər tam iş axınını yoxlayır: planlaşdırma, asılılıqlar, ötürmə
 
 - Agentlər video **çəkmir** və **yaratmır**. Montajçı və Kolorist yalnız `backend/workspace/media/` qovluğuna qoyduğunuz faylları ffmpeg ilə emal edir (kəsmə, birləşdirmə, LUT tətbiqi, rəng, səs normallaşdırma). Kolorist `.cube` LUT faylı yaradır və onu tapşırıq pəncərəsindən yükləmək olar.
 - Veb axtarışı Anthropic server alətidir (1000 axtarış üçün təxminən $10).
-- Sahib nəticəni rədd etdikdə yalnız həmin tapşırıq yenidən işlənir. Ondan asılı tapşırıqlar avtomatik təkrarlanmır; lazım olsa onlara **Retry** basın.
+- Sahib nəticəni rədd etdikdə yalnız həmin tapşırıq yenidən işlənir. Ondan asılı tapşırıqlar avtomatik təkrarlanmır; lazım olsa onlara **Yenidən cəhd et** basın.
 
 ## 8. Problemlərin həlli
 
 | Problem | Həll |
 |---|---|
 | "ANTHROPIC_API_KEY is not set" | `backend/.env` faylına açarı yazın və backendi yenidən başladın |
-| İşçilər `ERROR` statusundadır | İşçiyə klikləyin → **logs** tabında səbəbi oxuyun. Sonra tapşırıqda **Retry** basın |
+| İşçilər `XƏTA` statusundadır | İşçiyə klikləyin → **jurnal** tabında səbəbi oxuyun. Sonra tapşırıqda **Yenidən cəhd et** basın |
 | "Rate limited" | `MAX_CONCURRENT_AGENTS` dəyərini azaldın |
 | Ofis yüklənmir | Backendin işlədiyini yoxlayın: `curl localhost:8000/api/health` |
 | 3D yavaş işləyir | `?quality=low` rejimindən istifadə edin |

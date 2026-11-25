@@ -61,7 +61,7 @@ class Presence:
                 }
             if emp.paused:
                 return {"status": "PAUSED", "task_id": running.id if running else None,
-                        "detail": "Paused by owner"}
+                        "detail": "Sahib tərəfindən dayandırılıb"}
             if running is not None:
                 # Between API calls (e.g. waiting for a concurrency slot) - still working the task.
                 return {"status": "WORKING", "task_id": running.id, "project_id": running.project_id,
@@ -77,7 +77,7 @@ class Presence:
                 ).order_by(Task.id)
             ).first()
             if waiting is not None:
-                why = "Waiting for dependencies" if waiting.status == "pending" else "Queued - waiting for a free agent slot"
+                why = "Asılılıqları gözləyir" if waiting.status == "pending" else "Növbədədir — boş agent yeri gözləyir"
                 return {"status": "WAITING", "task_id": waiting.id, "project_id": waiting.project_id,
                         "detail": f"{why}: {waiting.title}"}
             done = s.scalars(
@@ -88,7 +88,7 @@ class Presence:
             ).first()
             if done is not None:
                 return {"status": "COMPLETED", "task_id": done.id, "project_id": done.project_id,
-                        "detail": f"Delivered: {done.title}"}
+                        "detail": f"Təhvil verdi: {done.title}"}
             return {"status": "IDLE", "detail": ""}
 
 

@@ -90,19 +90,19 @@ class LLM:
                         await on_event("text", event.text)
                 message = await stream.get_final_message()
         except anthropic.AuthenticationError as e:
-            raise LLMError("Anthropic authentication failed - check ANTHROPIC_API_KEY in backend/.env") from e
+            raise LLMError("Anthropic autentifikasiyası alınmadı — backend/.env faylında ANTHROPIC_API_KEY-i yoxlayın") from e
         except anthropic.PermissionDeniedError as e:
-            raise LLMError(f"Permission denied by the Anthropic API: {e.message}") from e
+            raise LLMError(f"Anthropic API icazə vermədi: {e.message}") from e
         except anthropic.NotFoundError as e:
-            raise LLMError(f"Model or endpoint not found ({settings.model}): {e.message}") from e
+            raise LLMError(f"Model və ya ünvan tapılmadı ({settings.model}): {e.message}") from e
         except anthropic.RateLimitError as e:
-            raise LLMError("Rate limited by the Anthropic API after retries - lower MAX_CONCURRENT_AGENTS") from e
+            raise LLMError("Anthropic API sorğu limitinə çatıldı — MAX_CONCURRENT_AGENTS dəyərini azaldın") from e
         except anthropic.BadRequestError as e:
-            raise LLMError(f"Bad request: {e.message}") from e
+            raise LLMError(f"Yanlış sorğu: {e.message}") from e
         except anthropic.APIStatusError as e:
-            raise LLMError(f"Anthropic API error {e.status_code}: {e.message}") from e
+            raise LLMError(f"Anthropic API xətası {e.status_code}: {e.message}") from e
         except anthropic.APIConnectionError as e:
-            raise LLMError("Could not reach the Anthropic API (network error)") from e
+            raise LLMError("Anthropic API-yə qoşulmaq mümkün olmadı (şəbəkə xətası)") from e
 
         text_parts: list[str] = []
         tool_uses: list[ToolUse] = []
@@ -116,7 +116,7 @@ class LLM:
                     try:
                         inp = json.loads(inp)
                     except json.JSONDecodeError:
-                        err = "Tool input was not valid JSON."
+                        err = "Alət girişi düzgün JSON deyil."
                 tool_uses.append(ToolUse(id=block.id, name=block.name, input=inp, parse_error=err))
         u = message.usage
         server = getattr(u, "server_tool_use", None)

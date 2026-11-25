@@ -96,12 +96,12 @@ async def generate_lut(ctx: ToolContext, data: dict[str, Any]) -> Any:
     # .cube ordering: red changes fastest -> loops are b, g, r (outer to inner), as written above.
     await asyncio.to_thread(path.write_text, "\n".join(lines) + "\n")
     swatches = []
-    for name_, rgb in (("shadows", (0.15, 0.15, 0.15)), ("midtones", (0.5, 0.5, 0.5)), ("highlights", (0.85, 0.85, 0.85)),
-                       ("skin", (0.78, 0.57, 0.45)), ("sky", (0.45, 0.62, 0.85)), ("foliage", (0.35, 0.55, 0.3))):
+    for name_, rgb in (("kölgələr", (0.15, 0.15, 0.15)), ("orta tonlar", (0.5, 0.5, 0.5)), ("işıqlı tonlar", (0.85, 0.85, 0.85)),
+                       ("dəri", (0.78, 0.57, 0.45)), ("səma", (0.45, 0.62, 0.85)), ("yaşıllıq", (0.35, 0.55, 0.3))):
         o = _grade(*rgb, params)
-        swatches.append({"name": f"{name_} (graded)", "hex": "#%02x%02x%02x" % tuple(int(v * 255) for v in o), "role": "LUT preview"})
+        swatches.append({"name": f"{name_} (korreksiyadan sonra)", "hex": "#%02x%02x%02x" % tuple(int(v * 255) for v in o), "role": "LUT önizləmə"})
     ctx.state.setdefault("artifacts", []).append(
-        {"kind": "palette", "title": f"LUT preview: {name}", "data": {"colors": swatches}, "by": ctx.employee_id,
+        {"kind": "palette", "title": f"LUT önizləmə: {name}", "data": {"colors": swatches}, "by": ctx.employee_id,
          "file": str(path.relative_to(workspace()))})
     ctx.state.setdefault("files", []).append(str(path.relative_to(workspace())))
     return {"saved": str(path.relative_to(workspace())), "size": size, "parameters": params,

@@ -21,7 +21,7 @@ export function ActivityFeed() {
   const select = useOffice((s) => s.select);
   const selectTask = useOffice((s) => s.selectTask);
   const end = useRef<HTMLDivElement>(null);
-  const name = (id: number | null) => (id == null ? "Owner" : employees[id]?.name ?? `#${id}`);
+  const name = (id: number | null) => (id == null ? "Sahib" : employees[id]?.name ?? `#${id}`);
 
   const items = useMemo(() => (tab === "comms"
     ? messages.slice(-200).map((m) => ({ id: `m${m.id}`, at: m.created_at, kind: m.kind, task: m.task_id,
@@ -30,7 +30,7 @@ export function ActivityFeed() {
           <b className="cursor-pointer hover:underline" onClick={() => m.to_id != null && select(m.to_id)}>{name(m.to_id)}</b></>,
         body: m.content }))
     : logs.slice(-250).map((l) => ({ id: `l${l.id}`, at: l.created_at, kind: l.kind, task: l.task_id,
-        head: <b className="cursor-pointer hover:underline" onClick={() => l.employee_id != null && select(l.employee_id)}>{l.employee_id != null ? name(l.employee_id) : "Office"}</b>,
+        head: <b className="cursor-pointer hover:underline" onClick={() => l.employee_id != null && select(l.employee_id)}>{l.employee_id != null ? name(l.employee_id) : "Studiya"}</b>,
         body: l.text }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [tab, messages, logs, employees]);
@@ -43,12 +43,12 @@ export function ActivityFeed() {
         {(["comms", "logs"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 px-3 py-2 transition ${tab === t ? "text-amber-300 border-b-2 border-amber-400" : "text-white/50 hover:text-white"}`}>
-            {t === "comms" ? `Communication (${messages.length})` : `Agent logs (${logs.length})`}
+            {t === "comms" ? `Ünsiyyət (${messages.length})` : `Agent jurnalı (${logs.length})`}
           </button>
         ))}
       </div>
       <div className="flex-1 space-y-1.5 overflow-y-auto p-2.5">
-        {items.length === 0 && <div className="p-4 text-center text-xs text-white/30">Nothing yet. Create a project to put the team to work.</div>}
+        {items.length === 0 && <div className="p-4 text-center text-xs text-white/30">Hələ heç nə yoxdur. Komandanı işə salmaq üçün layihə yaradın.</div>}
         {items.map((it) => {
           const st = KIND_STYLE[it.kind] ?? KIND_STYLE.system;
           return (
@@ -60,7 +60,7 @@ export function ActivityFeed() {
               </div>
               <div className="mt-0.5 whitespace-pre-wrap break-words text-white/60 line-clamp-4">{it.body}</div>
               {it.task != null && (
-                <button onClick={() => selectTask(it.task!)} className="mt-0.5 text-[9px] text-amber-300/70 hover:text-amber-300">task #{it.task}</button>
+                <button onClick={() => selectTask(it.task!)} className="mt-0.5 text-[9px] text-amber-300/70 hover:text-amber-300">tapşırıq #{it.task}</button>
               )}
             </div>
           );

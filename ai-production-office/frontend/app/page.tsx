@@ -33,10 +33,10 @@ export default function Page() {
     <main className="relative h-screen w-screen overflow-hidden">
       <div className="absolute inset-0">{loaded && <OfficeScene />}</div>
       {!loaded && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/70">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
-          <div className="text-sm">{connected ? "Loading the office…" : `Connecting to the backend at ${API_URL}…`}</div>
-          {!connected && <div className="text-xs text-white/40">Start it with ./start.sh (see README)</div>}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone-700">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-500 border-t-transparent" />
+          <div className="text-sm">{connected ? "Studiya yüklənir…" : `Backendə qoşulur: ${API_URL}…`}</div>
+          {!connected && <div className="text-xs text-stone-500">Onu ./start.sh ilə işə salın (README-yə baxın)</div>}
         </div>
       )}
       <TopBar />
@@ -46,7 +46,7 @@ export default function Page() {
             <TaskBoard />
           </div>
           <button onClick={() => setLeft(!left)} className="panel absolute bottom-20 z-20 px-2 py-1 text-[10px] text-white/60 transition-all"
-            style={{ left: left ? 340 : 12 }}>{left ? "◀ Tasks" : "▶ Tasks"}</button>
+            style={{ left: left ? 340 : 12 }}>{left ? "◀ Tapşırıqlar" : "▶ Tapşırıqlar"}</button>
           {!selected && (
             <div className={`absolute right-3 top-16 bottom-20 z-20 w-[340px] transition-transform ${right ? "" : "translate-x-[360px]"}`}>
               <ActivityFeed />
@@ -54,7 +54,7 @@ export default function Page() {
           )}
           {!selected && (
             <button onClick={() => setRight(!right)} className="panel absolute bottom-20 z-20 px-2 py-1 text-[10px] text-white/60"
-              style={{ right: right ? 360 : 12 }}>{right ? "Feed ▶" : "◀ Feed"}</button>
+              style={{ right: right ? 360 : 12 }}>{right ? "Lent ▶" : "◀ Lent"}</button>
           )}
           <div className="absolute bottom-3 left-3 right-3 z-20 flex justify-center pointer-events-none"><Roster /></div>
           <EmployeePanel />

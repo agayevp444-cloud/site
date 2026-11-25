@@ -52,16 +52,16 @@ PLAN_SCHEMA = {
     },
 }
 
-PLANNER_INSTRUCTIONS = """You are in the project kickoff meeting. Break the owner's brief into a production workflow.
-Rules:
-- Assign each task to exactly one employee by their role key from the directory (never to yourself or to QC;
-  QC review and final delivery are added automatically after your tasks).
-- Use only the specialists the brief actually needs - not everyone has to be involved.
-- 'ref' is a short unique id like "t1"; depends_on lists refs of tasks whose output is required first.
-  Dependencies must form a DAG. Independent work should run in parallel.
-- Descriptions must be specific: what to produce, format, length, constraints from the brief.
-- project_title: a short title for the project. summary: the workflow rationale in 2-4 sentences.
-Respond in the same language as the brief."""
+PLANNER_INSTRUCTIONS = """Sən layihənin başlanğıc iclasındasan. Sahibin brifini prodüksiya iş axınına böl.
+Qaydalar:
+- Hər tapşırığı siyahıdakı açar (key) ilə yalnız bir işçiyə təyin et (heç vaxt özünə və ya QC-yə yox;
+  QC yoxlaması və yekun təhvil sənin tapşırıqlarından sonra avtomatik əlavə olunur).
+- Yalnız brifin həqiqətən tələb etdiyi mütəxəssislərdən istifadə et — hamı iştirak etməli deyil.
+- 'ref' "t1" kimi qısa unikal id-dir; depends_on nəticəsi əvvəlcə lazım olan tapşırıqların ref-lərini sadalayır.
+  Asılılıqlar dövrəsiz qraf (DAG) olmalıdır. Müstəqil işlər paralel getməlidir.
+- Təsvirlər konkret olmalıdır: nə hazırlanmalı, format, həcm, brifdəki məhdudiyyətlər.
+- project_title: layihənin qısa adı. summary: iş axınının məntiqi, 2-4 cümlə.
+BÜTÜN mətnlər (project_title, summary, title, description) Azərbaycan dilində olmalıdır."""
 
 
 class Orchestrator:
@@ -154,7 +154,7 @@ class Orchestrator:
             s.add(p)
             s.commit()
         await hub.emit("project.updated", p.to_dict())
-        await self.runtime.log("owner", f"New project from owner: {p.title}", project_id=p.id)
+        await self.runtime.log("owner", f"Sahibdən yeni layihə: {p.title}", project_id=p.id)
         self._planning[p.id] = asyncio.create_task(self._plan(p.id))
         return p
 
@@ -171,26 +171,26 @@ class Orchestrator:
         with session() as s:
             p = s.get(Project, project_id)
             brief = p.description
-        presence.set_live(d.id, "IN_MEETING", project_id=project_id, detail="Project kickoff: planning workflow")
+        presence.set_live(d.id, "IN_MEETING", project_id=project_id, detail="Başlanğıc iclası: iş axını planlaşdırılır")
         await self.runtime.emit_employee(d.id)
-        await self.runtime.log("status", "Kickoff meeting: analysing brief and planning workflow", d.id, project_id)
+        await self.runtime.log("status", "Başlanğıc iclası: brif təhlil olunur, iş axını planlaşdırılır", d.id, project_id)
         try:
             await self.runtime.checkpoint(d.id, None)
-            presence.set_live(d.id, "IN_MEETING", project_id=project_id, detail="Project kickoff: planning workflow")
+            presence.set_live(d.id, "IN_MEETING", project_id=project_id, detail="Başlanğıc iclası: iş axını planlaşdırılır")
             await self.runtime.emit_employee(d.id)
             result = await llm.run_turn(
                 system=prompts.system_prompt(d) + "\n\n" + PLANNER_INSTRUCTIONS,
-                messages=[{"role": "user", "content": f"# Owner's brief\n{brief}"}],
+                messages=[{"role": "user", "content": f"# Sahibin brifi\n{brief}"}],
                 tools=[], effort=settings.director_effort, json_schema=PLAN_SCHEMA)
             await self.runtime.record_usage(result, d.id, project_id, None, "planning")
             if result.stop_reason == "refusal":
-                raise LLMError(f"Model declined to plan this project ({result.refusal_category or 'unknown'})")
+                raise LLMError(f"Model bu layihəni planlaşdırmaqdan imtina etdi ({result.refusal_category or 'naməlum'})")
             plan = json.loads(result.text)
             await self._materialise_plan(project_id, plan, d)
         except asyncio.CancelledError:
             raise
         except Exception as e:
-            msg = f"Planning failed: {e}"
+            msg = f"Planlaşdırma alınmadı: {e}"
             with session() as s:
                 p = s.get(Project, project_id)
                 p.status, p.error = "failed", msg
@@ -225,23 +225,23 @@ class Orchestrator:
                 if t is not None:
                     t.depends_on = [by_ref[r].id for r in spec.get("depends_on", []) if r in by_ref and by_ref[r] is not t]
             if not by_ref:
-                raise LLMError("The plan contained no assignable tasks.")
+                raise LLMError("Planda təyin oluna bilən tapşırıq yoxdur.")
             _break_cycles(list(by_ref.values()))
             work_ids = [t.id for t in by_ref.values()]
             qc = self.qc()
             review_deps = work_ids
             if qc is not None:
-                review = Task(project_id=project_id, title="Quality control review of all deliverables",
-                              description="Review every deliverable for completeness, accuracy, consistency and "
-                                          "brief compliance. Approve or request revisions per task.",
+                review = Task(project_id=project_id, title="Bütün nəticələrin keyfiyyət yoxlaması",
+                              description="Hər nəticəni tamlıq, dəqiqlik, uyğunluq və brifə cavab vermə baxımından "
+                                          "yoxla. Hər tapşırıq üçün təsdiqlə və ya revizya tələb et.",
                               assignee_id=qc.id, kind="review", priority="high", depends_on=work_ids)
                 s.add(review)
                 s.flush()
                 review_deps = [review.id]
-            delivery = Task(project_id=project_id, title="Compile and deliver final project package",
-                            description="Read all approved deliverables and the QC report. Write an executive "
-                                        "summary, the organised final package, open risks, and a short performance "
-                                        "review of each contributor.",
+            delivery = Task(project_id=project_id, title="Yekun layihə paketini hazırla və təhvil ver",
+                            description="Bütün təsdiqlənmiş nəticələri və QC hesabatını oxu. İcra xülasəsi, "
+                                        "sistemləşdirilmiş yekun paket, açıq risklər və hər iştirakçının qısa "
+                                        "fəaliyyət qiymətləndirməsini yaz.",
                             assignee_id=director.id, kind="delivery", priority="high", depends_on=review_deps)
             s.add(delivery)
             p = s.get(Project, project_id)
@@ -257,8 +257,8 @@ class Orchestrator:
             await hub.emit("task.updated", tdict)
         for tid, aid, title in assignments:
             await self.runtime.post_message(project_id, tid, director.id, aid, "assignment",
-                                            f"New assignment: {title}", read=True)
-        await self.runtime.log("status", f"Workflow created with {len(payload)} tasks", director.id, project_id)
+                                            f"Yeni tapşırıq: {title}", read=True)
+        await self.runtime.log("status", f"İş axını yaradıldı: {len(payload)} tapşırıq", director.id, project_id)
 
     # ------------------------------------------------------------------ completion hooks
     async def on_task_completed(self, task_id: int, ctx: ToolContext) -> None:
@@ -276,7 +276,7 @@ class Orchestrator:
             s.commit()
         for to_id, dep_id in handoffs:
             await self.runtime.post_message(t.project_id, task_id, author, to_id, "handoff",
-                                            f"Delivered '{t.title}' for your task #{dep_id}: {summary}")
+                                            f"'{t.title}' nəticəsini #{dep_id} tapşırığın üçün təhvil verdim: {summary}")
             await hub.emit("handoff", {"from_id": author, "to_id": to_id, "task_id": task_id})
         await self.runtime.emit_task(task_id)
 
@@ -290,11 +290,11 @@ class Orchestrator:
                 s.commit()
                 await hub.emit("project.updated", p.to_dict())
             await self.runtime.post_message(p.id, task_id, author, None, "approval",
-                                            "Final project package is ready for your approval.")
+                                            "Yekun layihə paketi təsdiqinizə hazırdır.")
             await hub.emit("handoff", {"from_id": author, "to_id": None, "task_id": task_id})
         elif p.status == "direct":
             await self.runtime.post_message(p.id, task_id, author, None, "handoff",
-                                            f"Finished your direct assignment '{t.title}': {summary}")
+                                            f"Birbaşa tapşırığınızı bitirdim — '{t.title}': {summary}")
         self.kick()
 
     async def on_task_failed(self, task_id: int) -> None:
@@ -305,25 +305,25 @@ class Orchestrator:
         with session() as s:
             t = s.get(Task, target_id)
             if t is None or t.project_id != ctx.project_id:
-                return "No such task in this project."
+                return "Bu layihədə belə tapşırıq yoxdur."
             ctx.state.setdefault("qc_approved", []).append(target_id)
             author = t.assignee_id
         await self.runtime.post_message(ctx.project_id, target_id, ctx.employee_id, author, "approval",
-                                        f"QC approved task #{target_id}. {note}".strip(), read=True)
-        return f"Task {target_id} approved."
+                                        f"QC #{target_id} tapşırığını təsdiqlədi. {note}".strip(), read=True)
+        return f"Tapşırıq {target_id} təsdiqləndi."
 
     async def qc_request_revision(self, ctx: ToolContext, target_id: int, feedback: str) -> str:
         with session() as s:
             t = s.get(Task, target_id)
             if t is None or t.project_id != ctx.project_id or t.kind != "work":
-                return "That task cannot be revised from this review."
+                return "Bu tapşırıq bu yoxlamadan revizyaya göndərilə bilməz."
             if t.revision_count >= settings.max_revisions:
-                return (f"Task {target_id} has already been revised {t.revision_count} times (limit). "
-                        "Note the remaining issues in your report instead.")
+                return (f"Tapşırıq {target_id} artıq {t.revision_count} dəfə revizya olunub (limit). "
+                        "Qalan problemləri hesabatında qeyd et.")
             ctx.state.setdefault("qc_revisions", {})[target_id] = feedback
             author = t.assignee_id
         await self.runtime.post_message(ctx.project_id, target_id, ctx.employee_id, author, "revision", feedback)
-        return f"Revision requested for task {target_id}. It will be reworked after your review is submitted."
+        return f"Tapşırıq {target_id} üçün revizya tələb olundu. Yoxlaman təqdim ediləndən sonra yenidən işlənəcək."
 
     async def _after_review(self, review_id: int, ctx: ToolContext) -> None:
         revisions: dict[int, str] = ctx.state.get("qc_revisions", {})
@@ -337,8 +337,8 @@ class Orchestrator:
                 t.approval, t.progress, t.completed_at = "none", 0.0, None
             rnd = 1 + sum(1 for x in s.scalars(select(Task).where(Task.project_id == review.project_id,
                                                                   Task.kind == "review")))
-            again = Task(project_id=review.project_id, title=f"QC re-review (round {rnd})",
-                         description="Re-review the revised deliverables: " + ", ".join(f"#{i}" for i in revisions),
+            again = Task(project_id=review.project_id, title=f"Təkrar QC yoxlaması (raund {rnd})",
+                         description="Revizya olunmuş nəticələri yenidən yoxla: " + ", ".join(f"#{i}" for i in revisions),
                          assignee_id=review.assignee_id, kind="review", priority="high", depends_on=list(revisions))
             s.add(again)
             s.flush()
@@ -351,7 +351,7 @@ class Orchestrator:
                 select(Task).where(Task.project_id == review.project_id, Task.kind == "delivery"))]
         for i in ids:
             await self.runtime.emit_task(i)
-        await self.runtime.log("status", f"QC sent {len(revisions)} task(s) back for revision",
+        await self.runtime.log("status", f"QC {len(revisions)} tapşırığı revizyaya qaytardı",
                                ctx.employee_id, ctx.project_id, review_id)
 
     # ------------------------------------------------------------------ owner controls
@@ -414,7 +414,7 @@ class Orchestrator:
             e.paused = paused
             s.commit()
         self.runtime.set_paused(employee_id, paused)
-        await self.runtime.log("owner", "Paused by owner" if paused else "Resumed by owner", employee_id)
+        await self.runtime.log("owner", "Sahib tərəfindən dayandırıldı" if paused else "Sahib tərəfindən davam etdirildi", employee_id)
         await self.runtime.emit_employee(employee_id, force=True)
         self.kick()
 
@@ -428,11 +428,11 @@ class Orchestrator:
             s.commit()
             author, pid = t.assignee_id, t.project_id
         if approve:
-            await self.runtime.post_message(pid, task_id, None, author, "approval", "Owner approved your deliverable.")
+            await self.runtime.post_message(pid, task_id, None, author, "approval", "Sahib nəticənizi təsdiqlədi.")
             await self.runtime.emit_task(task_id)
         else:
-            await self.runtime.post_message(pid, task_id, None, author, "revision", feedback or "Owner rejected this deliverable.")
-            await self.retry_task(task_id, feedback or "The owner rejected this deliverable. Improve it substantially.")
+            await self.runtime.post_message(pid, task_id, None, author, "revision", feedback or "Sahib bu nəticəni rədd etdi.")
+            await self.retry_task(task_id, feedback or "Sahib bu nəticəni rədd etdi. Onu əhəmiyyətli dərəcədə yaxşılaşdır.")
 
     async def review_project(self, project_id: int, approve: bool, feedback: str | None) -> None:
         with session() as s:
@@ -442,14 +442,14 @@ class Orchestrator:
                 s.commit()
                 await hub.emit("project.updated", p.to_dict())
             else:
-                p.status, p.owner_feedback = "running", feedback or "Owner rejected the package."
+                p.status, p.owner_feedback = "running", feedback or "Sahib paketi rədd etdi."
                 delivery = s.scalars(select(Task).where(Task.project_id == project_id, Task.kind == "delivery")
                                      .order_by(Task.id.desc())).first()
                 s.commit()
                 await hub.emit("project.updated", p.to_dict())
                 if delivery:
                     await self.retry_task(delivery.id, p.owner_feedback)
-        await self.runtime.log("owner", f"Owner {'approved' if approve else 'rejected'} the final package",
+        await self.runtime.log("owner", f"Sahib yekun paketi {'təsdiqlədi' if approve else 'rədd etdi'}",
                                project_id=project_id)
         await self.runtime.emit_all_employees()
 
@@ -475,7 +475,7 @@ class Orchestrator:
             if project_id is None:
                 p = s.scalars(select(Project).where(Project.status == "direct")).first()
                 if p is None:
-                    p = Project(title="Direct assignments", description="Tasks the owner assigned directly to employees.",
+                    p = Project(title="Birbaşa tapşırıqlar", description="Sahibin işçilərə birbaşa verdiyi tapşırıqlar.",
                                 status="direct")
                     s.add(p)
                     s.flush()
@@ -490,7 +490,7 @@ class Orchestrator:
             await hub.emit("project.updated", p.to_dict())
             await hub.emit("task.updated", t.to_dict())
         await self.runtime.post_message(project_id, t.id, None, employee_id, "assignment",
-                                        f"Owner assigned: {title}\n{description}")
+                                        f"Sahib tapşırdı: {title}\n{description}")
         self.kick()
         return t
 

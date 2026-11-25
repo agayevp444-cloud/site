@@ -74,18 +74,18 @@ export default function OfficeScene() {
   const low = useMemo(() => lowQuality(), []);
 
   return (
-    <Canvas shadows={!low} dpr={low ? 1 : [1, 2]} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+    <Canvas shadows={!low} dpr={low ? 1 : [1, 2]}
+      gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       onPointerMissed={() => select(null)}>
-      <color attach="background" args={["#17110d"]} />
-      <fog attach="fog" args={["#17110d", 60, 110]} />
-      <OrthographicCamera makeDefault position={[26, 24, 26]} zoom={34} near={-100} far={300} />
+      <OrthographicCamera makeDefault position={[26, 25, 26]} zoom={33} near={-100} far={300} />
       <OrbitControls target={[0, 0, 0]} enableDamping maxPolarAngle={Math.PI / 2.6} minPolarAngle={Math.PI / 6}
         minZoom={18} maxZoom={110} />
-      <ambientLight intensity={0.35} color="#ffe2c2" />
-      <hemisphereLight args={["#ffe9cf", "#3a2a1e", 0.55]} />
-      <directionalLight position={[14, 22, 10]} intensity={1.6} color="#ffd29e" castShadow
-        shadow-mapSize={[2048, 2048]} shadow-camera-left={-20} shadow-camera-right={20}
-        shadow-camera-top={20} shadow-camera-bottom={-20} shadow-bias={-0.0004} />
+      <ambientLight intensity={0.55} color="#ffffff" />
+      <hemisphereLight args={["#ffffff", "#b8b2a8", 0.9]} />
+      <directionalLight position={[16, 26, 12]} intensity={2.1} color="#fffaf2" castShadow
+        shadow-mapSize={[2048, 2048]} shadow-camera-left={-22} shadow-camera-right={22}
+        shadow-camera-top={22} shadow-camera-bottom={-22} shadow-bias={-0.0004} shadow-normalBias={0.02} />
+      <directionalLight position={[-18, 14, 20]} intensity={0.45} color="#e8f0ff" />
       <Office employees={employees} />
       {employees.filter((e) => e.active).map((e) => {
         const spot = spots.get(e.id);

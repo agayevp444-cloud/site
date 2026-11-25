@@ -43,7 +43,7 @@ async def fake_run_turn(*, system, messages, tools, effort, on_event=None, json_
         await on_event("thinking", "considering the brief")
         await on_event("block_start", "text")
         await on_event("text", "working...")
-    who = re.search(r"You are ([A-Z][a-z]+ [A-Z][a-z]+)", system).group(1)
+    who = re.search(r"Adın: ([^.\n]+)\.", system).group(1)
     if who in FAIL_FOR:
         raise LLMError("simulated API outage")
     if json_schema is not None:
@@ -59,8 +59,8 @@ async def fake_run_turn(*, system, messages, tools, effort, on_event=None, json_
     brief = last
     uses: list[ToolUse] = []
     if "approve_task" in [t.get("name") for t in tools]:
-        ids = [int(x) for x in re.findall(r"## Task (\d+):", brief)]
-        first_round = "REVISION" not in brief and "re-review" not in brief
+        ids = [int(x) for x in re.findall(r"## Tapşırıq (\d+):", brief)]
+        first_round = "REVİZİYA" not in brief and "Təkrar QC" not in brief
         for i in ids:
             if first_round and i == ids[-1]:
                 uses.append(ToolUse(id=f"r{i}", name="request_revision", input={"task_id": i, "feedback": "Tighten it."}))
@@ -69,7 +69,7 @@ async def fake_run_turn(*, system, messages, tools, effort, on_event=None, json_
     elif "consult" in brief:
         pass
     uses.append(ToolUse(id="s1", name="submit_deliverable",
-                        input={"content": f"# Deliverable by {who}\n\nrevised={'REVISION' in brief}", "summary": f"{who} done"}))
+                        input={"content": f"# Deliverable by {who}\n\nrevised={'REVİZİYA' in brief}", "summary": f"{who} done"}))
     uses.append(ToolUse(id="bad", name="save_artifact", input={"kind": "palette"}))  # invalid -> error result
     return _result("", uses)
 
@@ -109,12 +109,12 @@ def test_full_project_lifecycle(client):
     assert concept["revision_count"] == 1 and "revised=True" in concept["deliverable"]
     assert research["started_at"] <= research["completed_at"] <= concept["started_at"]
     assert all(t["status"] == "completed" for t in tasks)
-    assert proj["final_deliverable"].startswith("# Deliverable by Aria Vance")
+    assert proj["final_deliverable"].startswith("# Deliverable by Leyla Məmmədova")
 
     kinds_msgs = {m["kind"] for m in st["messages"]}
     assert {"assignment", "handoff", "revision", "approval"} <= kinds_msgs
     assert st["usage"]["calls"] > 0 and st["usage"]["cost_usd"] > 0
-    assert any("invalid input" in lg["text"] for lg in st["logs"])
+    assert any("yanlış giriş" in lg["text"] for lg in st["logs"])
 
     by_key = {e["key"]: e for e in st["employees"]}
     assert by_key["researcher"]["presence"]["status"] == "COMPLETED"
@@ -128,7 +128,7 @@ def test_full_project_lifecycle(client):
 
 def test_failure_surfaces_error_and_retry(client):
     emp = next(e for e in client.get("/api/state").json()["employees"] if e["key"] == "marketing")
-    FAIL_FOR.add("Daniel Kim")
+    FAIL_FOR.add("Kamran Səfərov")
     t = client.post(f"/api/employees/{emp['id']}/tasks", json={"title": "Plan socials", "description": "x"}).json()
     wait_for(lambda: next(x for x in client.get("/api/state").json()["tasks"] if x["id"] == t["id"])["status"] == "failed")
     st = client.get("/api/state").json()

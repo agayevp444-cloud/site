@@ -37,7 +37,7 @@ async def lifespan(_: FastAPI):
     await orchestrator.stop()
 
 
-app = FastAPI(title="AI Production Office", lifespan=lifespan)
+app = FastAPI(title="İLHAM Studio — AI Prodüksiya Ofisi", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin, "http://127.0.0.1:3000"],
                    allow_methods=["*"], allow_headers=["*"])
 
@@ -167,7 +167,7 @@ def _project(pid: int) -> Project:
     with session() as s:
         p = s.get(Project, pid)
         if p is None:
-            raise HTTPException(404, "Project not found")
+            raise HTTPException(404, "Layihə tapılmadı")
         return p
 
 
@@ -175,7 +175,7 @@ def _project(pid: int) -> Project:
 async def review_project(pid: int, body: ReviewIn) -> dict:
     p = _project(pid)
     if p.status != "awaiting_approval":
-        raise HTTPException(409, f"Project is {p.status}, not awaiting approval")
+        raise HTTPException(409, f"Layihənin statusu {p.status}-dir, təsdiq gözləmir")
     await orchestrator.review_project(pid, body.approve, body.feedback)
     return _project(pid).to_dict()
 
@@ -192,7 +192,7 @@ def _task(tid: int) -> Task:
     with session() as s:
         t = s.get(Task, tid)
         if t is None:
-            raise HTTPException(404, "Task not found")
+            raise HTTPException(404, "Tapşırıq tapılmadı")
         return t
 
 
@@ -207,7 +207,7 @@ async def stop_task(tid: int) -> dict:
 async def retry_task(tid: int, body: RetryIn) -> dict:
     t = _task(tid)
     if t.status == "running":
-        raise HTTPException(409, "Task is running")
+        raise HTTPException(409, "Tapşırıq hazırda icra olunur")
     await orchestrator.retry_task(tid, body.feedback)
     return _task(tid).to_dict()
 
@@ -217,7 +217,7 @@ async def reassign_task(tid: int, body: ReassignIn) -> dict:
     _task(tid)
     with session() as s:
         if s.get(Employee, body.employee_id) is None:
-            raise HTTPException(404, "Employee not found")
+            raise HTTPException(404, "İşçi tapılmadı")
     await orchestrator.reassign_task(tid, body.employee_id)
     return _task(tid).to_dict()
 
@@ -226,7 +226,7 @@ async def reassign_task(tid: int, body: ReassignIn) -> dict:
 async def review_task(tid: int, body: ReviewIn) -> dict:
     t = _task(tid)
     if t.status != "completed":
-        raise HTTPException(409, "Only completed deliverables can be reviewed")
+        raise HTTPException(409, "Yalnız tamamlanmış nəticələr yoxlanıla bilər")
     await orchestrator.review_task(tid, body.approve, body.feedback)
     return _task(tid).to_dict()
 
@@ -236,7 +236,7 @@ def _emp(eid: int) -> Employee:
     with session() as s:
         e = s.get(Employee, eid)
         if e is None:
-            raise HTTPException(404, "Employee not found")
+            raise HTTPException(404, "İşçi tapılmadı")
         return e
 
 
@@ -245,7 +245,7 @@ async def add_employee(body: EmployeeIn) -> dict:
     tools = body.tools if body.tools is not None else COMMON_TOOLS
     unknown = [t for t in tools if t not in REGISTRY]
     if unknown:
-        raise HTTPException(400, f"Unknown tools: {unknown}")
+        raise HTTPException(400, f"Naməlum alətlər: {unknown}")
     with session() as s:
         used = set(s.scalars(select(Employee.desk).where(Employee.active.is_(True))))
         desk = next(i for i in range(100) if i not in used)
@@ -253,8 +253,8 @@ async def add_employee(body: EmployeeIn) -> dict:
         key, n = base, 2
         while s.scalars(select(Employee).where(Employee.key == key)).first():
             key, n = f"{base}_{n}", n + 1
-        prompt = body.system_prompt or (f"You are {body.name}, {body.title} at a creative video production company. "
-                                        f"{body.job_description} Produce concrete, professional, production-ready work.")
+        prompt = body.system_prompt or (f"Adın: {body.name}. Vəzifən: İLHAM Studio-da {body.title}.\n"
+                                        f"{body.job_description}\nKonkret, peşəkar, istehsala hazır iş təqdim et.")
         e = Employee(key=key, name=body.name, title=body.title, department=body.department,
                      job_description=body.job_description, system_prompt=prompt, tools=tools, desk=desk,
                      color=body.color)
@@ -262,7 +262,7 @@ async def add_employee(body: EmployeeIn) -> dict:
         s.commit()
     out = _employee_out(e)
     await hub.emit("employee.updated", out)
-    await runtime.log("owner", f"Hired {e.name} as {e.title}", e.id)
+    await runtime.log("owner", f"{e.name} {e.title} vəzifəsinə işə götürüldü", e.id)
     return out
 
 
@@ -272,18 +272,18 @@ async def update_employee(eid: int, body: EmployeePatch) -> dict:
     if body.tools is not None:
         unknown = [t for t in body.tools if t not in REGISTRY]
         if unknown:
-            raise HTTPException(400, f"Unknown tools: {unknown}")
+            raise HTTPException(400, f"Naməlum alətlər: {unknown}")
     with session() as s:
         e = s.get(Employee, eid)
         changes = body.model_dump(exclude_none=True)
         if e.is_director and changes.get("active") is False:
-            raise HTTPException(400, "The Executive Director cannot be deactivated")
+            raise HTTPException(400, "İcraçı Direktor deaktiv edilə bilməz")
         for k, v in changes.items():
             setattr(e, k, v)
         s.commit()
     out = _employee_out(e)
     await hub.emit("employee.updated", out)
-    await runtime.log("owner", f"Updated profile: {', '.join(changes) or 'no changes'}", eid)
+    await runtime.log("owner", f"Profil yeniləndi: {', '.join(changes) or 'dəyişiklik yoxdur'}", eid)
     return out
 
 
@@ -306,7 +306,7 @@ async def clear_error(eid: int) -> dict:
     with session() as s:
         e = s.get(Employee, eid)
         if e is None:
-            raise HTTPException(404, "Employee not found")
+            raise HTTPException(404, "İşçi tapılmadı")
         e.last_error = None
         s.commit()
     await runtime.emit_employee(eid, force=True)
@@ -317,7 +317,7 @@ async def clear_error(eid: int) -> dict:
 async def assign(eid: int, body: AssignIn) -> dict:
     e = _emp(eid)
     if not e.active:
-        raise HTTPException(400, "Employee is not active")
+        raise HTTPException(400, "İşçi aktiv deyil")
     t = await orchestrator.assign_direct(eid, body.title, body.description, body.priority, body.project_id)
     return t.to_dict()
 
@@ -363,7 +363,7 @@ async def get_file(path: str):
     root = workspace().resolve()
     p = (root / path).resolve()
     if root not in p.parents or not p.is_file():
-        raise HTTPException(404, "File not found")
+        raise HTTPException(404, "Fayl tapılmadı")
     return FileResponse(p, filename=p.name)
 
 

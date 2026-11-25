@@ -1,16 +1,16 @@
 "use client";
 import { useMemo, useState } from "react";
 import { api } from "@/lib/api";
-import { PRIORITY_COLOR, TASK_STATUS_COLOR, fmtTime, fmtUsd } from "@/lib/status";
+import { PRIORITY_AZ, PRIORITY_COLOR, PROJECT_STATUS_AZ, TASK_STATUS_COLOR, fmtTime, fmtUsd } from "@/lib/status";
 import { guarded, useOffice } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { Button, Markdown, Modal, Pill, inputCls } from "./common";
 
 const COLUMNS: { key: string; title: string; match: (t: Task) => boolean }[] = [
-  { key: "waiting", title: "Waiting", match: (t) => t.status === "pending" || t.status === "queued" },
-  { key: "running", title: "In progress", match: (t) => t.status === "running" },
-  { key: "done", title: "Done", match: (t) => t.status === "completed" },
-  { key: "stopped", title: "Failed / stopped", match: (t) => t.status === "failed" || t.status === "cancelled" },
+  { key: "waiting", title: "Gözləyir", match: (t) => t.status === "pending" || t.status === "queued" },
+  { key: "running", title: "İcrada", match: (t) => t.status === "running" },
+  { key: "done", title: "Hazırdır", match: (t) => t.status === "completed" },
+  { key: "stopped", title: "Uğursuz / dayandırılıb", match: (t) => t.status === "failed" || t.status === "cancelled" },
 ];
 
 const PROJECT_COLOR: Record<string, string> = {
@@ -39,15 +39,15 @@ export function TaskBoard() {
       <div className="space-y-2 border-b border-white/10 p-3">
         <div className="flex items-center gap-2">
           <select className={`${inputCls} !py-1.5 text-xs`} value={activeId ?? ""} onChange={(e) => setActive(e.target.value ? Number(e.target.value) : null)}>
-            {list.length === 0 && <option value="">No projects yet</option>}
+            {list.length === 0 && <option value="">Hələ layihə yoxdur</option>}
             {list.map((p) => <option key={p.id} value={p.id}>#{p.id} {p.title}</option>)}
           </select>
         </div>
         {project && (
           <>
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
-              <Pill color={PROJECT_COLOR[project.status]}>{project.status.replace("_", " ")}</Pill>
-              <span className="text-white/50">{done}/{tasks.length} tasks</span>
+              <Pill color={PROJECT_COLOR[project.status]}>{PROJECT_STATUS_AZ[project.status] ?? project.status}</Pill>
+              <span className="text-white/50">{done}/{tasks.length} tapşırıq</span>
               <span className="text-white/50">· {fmtUsd(projCost)}</span>
               <span className="text-white/40">· {fmtTime(project.created_at)}</span>
             </div>
@@ -56,18 +56,18 @@ export function TaskBoard() {
                 <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all" style={{ width: `${(done / tasks.length) * 100}%` }} />
               </div>
             )}
-            {project.status === "planning" && <p className="text-[11px] text-sky-300">The Executive Director is in the kickoff meeting, planning the workflow…</p>}
+            {project.status === "planning" && <p className="text-[11px] text-sky-300">İcraçı Direktor başlanğıc iclasındadır, iş axınını planlaşdırır…</p>}
             {project.error && <p className="text-[11px] text-red-300">{project.error}</p>}
             {project.plan_summary && <p className="text-[11px] leading-snug text-white/60 line-clamp-4">{project.plan_summary}</p>}
             <div className="flex flex-wrap gap-2">
               {project.final_deliverable && (
                 <Button small variant={project.status === "awaiting_approval" ? "primary" : "default"} onClick={() => setShowPackage(true)}>
-                  {project.status === "awaiting_approval" ? "Review final package" : "View final package"}
+                  {project.status === "awaiting_approval" ? "Yekun paketi yoxla" : "Yekun paketə bax"}
                 </Button>
               )}
               {["planning", "running", "awaiting_approval"].includes(project.status) && (
-                <Button small variant="ghost" onClick={() => confirm("Cancel this project and stop all its tasks?") && guarded(() => api.post(`/api/projects/${project.id}/cancel`))}>
-                  Cancel project
+                <Button small variant="ghost" onClick={() => confirm("Bu layihə ləğv edilsin və bütün tapşırıqları dayandırılsın?") && guarded(() => api.post(`/api/projects/${project.id}/cancel`))}>
+                  Layihəni ləğv et
                 </Button>
               )}
             </div>
@@ -95,12 +95,12 @@ export function TaskBoard() {
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-white/50">
                         {who && <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: who.color }} />{who.name}</span>}
-                        <Pill color={PRIORITY_COLOR[t.priority]}>{t.priority}</Pill>
-                        {t.status === "queued" && <span className="text-amber-300">queued</span>}
-                        {t.status === "pending" && t.depends_on.length > 0 && <span>needs #{t.depends_on.join(", #")}</span>}
-                        {t.revision_count > 0 && <span className="text-amber-300">rev {t.revision_count}</span>}
-                        {t.approval === "pending" && <span className="text-sky-300">needs approval</span>}
-                        {t.approval === "approved" && <span className="text-emerald-300">approved</span>}
+                        <Pill color={PRIORITY_COLOR[t.priority]}>{PRIORITY_AZ[t.priority]}</Pill>
+                        {t.status === "queued" && <span className="text-amber-300">növbədə</span>}
+                        {t.status === "pending" && t.depends_on.length > 0 && <span>gözləyir: #{t.depends_on.join(", #")}</span>}
+                        {t.revision_count > 0 && <span className="text-amber-300">revizya {t.revision_count}</span>}
+                        {t.approval === "pending" && <span className="text-sky-300">təsdiq gözləyir</span>}
+                        {t.approval === "approved" && <span className="text-emerald-300">təsdiqləndi</span>}
                         {t.cost_usd > 0 && <span>{fmtUsd(t.cost_usd)}</span>}
                       </div>
                       {t.status === "running" && (
@@ -118,16 +118,16 @@ export function TaskBoard() {
         })}
       </div>
       {showPackage && project?.final_deliverable && (
-        <Modal wide title={`Final package · ${project.title}`} onClose={() => setShowPackage(false)}>
+        <Modal wide title={`Yekun paket · ${project.title}`} onClose={() => setShowPackage(false)}>
           <Markdown>{project.final_deliverable}</Markdown>
           {project.status === "awaiting_approval" && (
             <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
-              <textarea className={inputCls} rows={2} placeholder="Feedback for the Director (required to reject)…" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+              <textarea className={inputCls} rows={2} placeholder="Direktor üçün rəy (rədd etmək üçün mütləqdir)…" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
               <div className="flex gap-2">
-                <Button variant="success" onClick={() => guarded(async () => { await api.post(`/api/projects/${project.id}/review`, { approve: true }); setShowPackage(false); })}>Approve &amp; deliver</Button>
+                <Button variant="success" onClick={() => guarded(async () => { await api.post(`/api/projects/${project.id}/review`, { approve: true }); setShowPackage(false); })}>Təsdiqlə və təhvil al</Button>
                 <Button variant="danger" disabled={!feedback.trim()} onClick={() => guarded(async () => {
                   await api.post(`/api/projects/${project.id}/review`, { approve: false, feedback }); setFeedback(""); setShowPackage(false);
-                })}>Reject &amp; request changes</Button>
+                })}>Rədd et və dəyişiklik istə</Button>
               </div>
             </div>
           )}

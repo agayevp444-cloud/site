@@ -35,9 +35,9 @@ async def read_deliverable(ctx: ToolContext, data: dict[str, Any]) -> Any:
     with session() as s:
         t = s.get(Task, data["task_id"])
         if t is None or t.project_id != ctx.project_id:
-            return "No such task in this project."
+            return "Bu layihədə belə tapşırıq yoxdur."
         if not t.deliverable:
-            return f"Task {t.id} has no deliverable yet (status: {t.status})."
+            return f"Tapşırıq {t.id} üçün hələ nəticə yoxdur (status: {t.status})."
         return {"task_id": t.id, "title": t.title, "deliverable": t.deliverable, "artifacts": t.artifacts}
 
 
@@ -49,10 +49,10 @@ async def send_message(ctx: ToolContext, data: dict[str, Any]) -> Any:
     with session() as s:
         target = find_employee(s, data["to"])
         if target is None:
-            return f"No colleague matches '{data['to']}'."
+            return f"'{data['to']}' adlı həmkar tapılmadı."
         target_id, target_name = target.id, target.name
     await ctx.runtime.post_message(ctx.project_id, ctx.task_id, ctx.employee_id, target_id, "message", data["content"])
-    return f"Message delivered to {target_name}."
+    return f"Mesaj {target_name}-a çatdırıldı."
 
 
 @tool("check_inbox", "Read unread messages that colleagues or the owner sent you.", {}, category="collaboration")
@@ -61,11 +61,11 @@ async def check_inbox(ctx: ToolContext, _: dict[str, Any]) -> Any:
         emps = {e.id: e.name for e in s.scalars(select(Employee))}
         msgs = s.scalars(select(Message).where(Message.to_id == ctx.employee_id, Message.read.is_(False))
                          .order_by(Message.id)).all()
-        out = [{"from": emps.get(m.from_id, "Owner"), "kind": m.kind, "content": m.content} for m in msgs]
+        out = [{"from": emps.get(m.from_id, "Sahib"), "kind": m.kind, "content": m.content} for m in msgs]
         for m in msgs:
             m.read = True
         s.commit()
-    return out or "Inbox is empty."
+    return out or "Gələnlər qutusu boşdur."
 
 
 @tool("consult_colleague", "Hold a short live meeting with a colleague: ask a question and get their expert answer. "
@@ -88,7 +88,7 @@ async def save_note(ctx: ToolContext, data: dict[str, Any]) -> Any:
         else:
             note.value, note.updated_at = data["value"], utcnow()
         s.commit()
-    return "Saved."
+    return "Saxlanıldı."
 
 
 @tool("read_notes", "Read your working-memory notes for this project.", {}, category="memory")
@@ -96,7 +96,7 @@ async def read_notes(ctx: ToolContext, _: dict[str, Any]) -> Any:
     with session() as s:
         notes = s.scalars(select(MemoryNote).where(MemoryNote.project_id == ctx.project_id,
                                                    MemoryNote.employee_id == ctx.employee_id)).all()
-        return {n.key: n.value for n in notes} or "No notes yet."
+        return {n.key: n.value for n in notes} or "Hələ qeyd yoxdur."
 
 
 @tool("save_artifact", "Attach a structured artifact to your deliverable so the office UI can render it. "
@@ -115,7 +115,7 @@ async def save_artifact(ctx: ToolContext, data: dict[str, Any]) -> Any:
         if not isinstance(data["data"].get("columns"), list) or not isinstance(data["data"].get("rows"), list):
             return "table artifacts need data={'columns': [...], 'rows': [[...], ...]}"
     ctx.state.setdefault("artifacts", []).append(art)
-    return f"Artifact '{data['title']}' saved."
+    return f"'{data['title']}' artefaktı saxlanıldı."
 
 
 @tool("submit_deliverable", "Submit your finished work for this task. Call exactly once, at the end, with the "
@@ -125,7 +125,7 @@ async def save_artifact(ctx: ToolContext, data: dict[str, Any]) -> Any:
 async def submit_deliverable(ctx: ToolContext, data: dict[str, Any]) -> Any:
     ctx.state["deliverable"] = data["content"]
     ctx.state["summary"] = data["summary"]
-    return "Deliverable submitted. Finish your turn now."
+    return "Nəticə təqdim olundu. İndi növbəni bitir."
 
 
 # --- Quality control -------------------------------------------------------------------------

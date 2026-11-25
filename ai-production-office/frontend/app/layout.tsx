@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Production Office",
-  description: "A live 3D office of Claude-powered AI employees producing creative work.",
+  title: "İLHAM Studio — AI Prodüksiya Ofisi",
+  description: "Claude ilə işləyən AI işçilərin yaradıcı prodüksiya işi gördüyü canlı 3D studiya.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="az">
       <body>{children}</body>
     </html>
   );

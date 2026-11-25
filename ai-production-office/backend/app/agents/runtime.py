@@ -113,9 +113,9 @@ class AgentRuntime:
         if not ev.is_set():
             presence.clear_live(employee_id)
             await self.emit_employee(employee_id)
-            await self.log("status", "Paused by owner - holding before next step", employee_id, task_id=task_id)
+            await self.log("status", "Sahib tərəfindən dayandırıldı — növbəti addımdan əvvəl gözləyir", employee_id, task_id=task_id)
             await ev.wait()
-            await self.log("status", "Resumed", employee_id, task_id=task_id)
+            await self.log("status", "Davam edir", employee_id, task_id=task_id)
 
     # ---------------------------------------------------------------- live state helpers
     async def _set_state(self, emp_id: int, state: str, task: Task, detail: str = "", **kw: Any) -> None:
@@ -137,7 +137,7 @@ class AgentRuntime:
         tools = definitions_for(tool_names)
         work_state = "REVIEWING" if task.kind in ("review", "delivery") else "WORKING"
         await self.emit_task(task_id)
-        await self.log("status", f"Started task: {task.title}", emp.id, task.project_id, task_id)
+        await self.log("status", f"Tapşırığa başladı: {task.title}", emp.id, task.project_id, task_id)
 
         ctx = ToolContext(employee_id=emp.id, project_id=task.project_id, task_id=task_id, runtime=self)
         messages: list[dict[str, Any]] = [{"role": "user", "content": prompts.task_brief(task_id, emp.id)}]
@@ -145,26 +145,26 @@ class AgentRuntime:
         try:
             for step in range(1, settings.max_steps + 1):
                 await self.checkpoint(emp.id, task_id)
-                await self._set_state(emp.id, "THINKING", task, f"Step {step}: {task.title}")
+                await self._set_state(emp.id, "THINKING", task, f"Addım {step}: {task.title}")
                 result = await self._stream_turn(emp.id, task, system, messages, tools, work_state)
                 await self.record_usage(result, emp.id, task.project_id, task_id, "task")
                 final_text = result.text or final_text
 
                 if result.stop_reason == "refusal":
-                    raise LLMError(f"Model declined the request (category: {result.refusal_category or 'unknown'})")
+                    raise LLMError(f"Model sorğunu rədd etdi (kateqoriya: {result.refusal_category or 'naməlum'})")
                 messages.append({"role": "assistant", "content": result.content})
                 if result.stop_reason == "pause_turn":
                     continue
                 if result.stop_reason == "max_tokens" and result.tool_uses:
                     messages.append({"role": "user", "content": [
                         {"type": "tool_result", "tool_use_id": tu.id, "is_error": True,
-                         "content": "Output was cut off by max_tokens before the tool input finished. "
-                                    "Retry with a shorter input or split the work."} for tu in result.tool_uses]})
+                         "content": "Çıxış max_tokens limitinə görə alət girişi bitmədən kəsildi. "
+                                    "Daha qısa girişlə yenidən cəhd et və ya işi hissələrə böl."} for tu in result.tool_uses]})
                     continue
                 if not result.tool_uses:
                     break
 
-                await self._set_state(emp.id, work_state, task, f"Using tools: {', '.join(t.name for t in result.tool_uses)}")
+                await self._set_state(emp.id, work_state, task, f"Alətlərdən istifadə: {', '.join(t.name for t in result.tool_uses)}")
                 tool_results = await asyncio.gather(*(self._run_tool(ctx, tu) for tu in result.tool_uses))
                 messages.append({"role": "user", "content": list(tool_results)})
                 with session() as s:
@@ -176,12 +176,12 @@ class AgentRuntime:
                     # Let the model close its turn; no further tool calls are needed.
                     break
             else:
-                await self.log("system", f"Reached step limit ({settings.max_steps}); using latest output.",
+                await self.log("system", f"Addım limiti ({settings.max_steps}) doldu; son nəticə istifadə olunur.",
                                emp.id, task.project_id, task_id)
 
             deliverable = ctx.state.get("deliverable") or final_text.strip()
             if not deliverable:
-                raise LLMError("Agent finished without producing a deliverable.")
+                raise LLMError("Agent nəticə təqdim etmədən işi bitirdi.")
             with session() as s:
                 t = s.get(Task, task_id)
                 t.deliverable = deliverable
@@ -194,7 +194,7 @@ class AgentRuntime:
                 t.status, t.completed_at, t.progress = "completed", utcnow(), 1.0
                 t.feedback = None
                 s.commit()
-            await self.log("status", f"Completed: {task.title}", emp.id, task.project_id, task_id)
+            await self.log("status", f"Tamamladı: {task.title}", emp.id, task.project_id, task_id)
             presence.clear_live(emp.id)
             await self.emit_task(task_id)
             await self.emit_employee(emp.id)
@@ -206,7 +206,7 @@ class AgentRuntime:
                 if t.status == "running":
                     t.status = "cancelled"
                     s.commit()
-            await self.log("owner", f"Task stopped: {task.title}", emp.id, task.project_id, task_id)
+            await self.log("owner", f"Tapşırıq dayandırıldı: {task.title}", emp.id, task.project_id, task_id)
             await self.emit_task(task_id)
             await self.emit_employee(emp.id)
             raise
@@ -219,7 +219,7 @@ class AgentRuntime:
                 e_ = s.get(Employee, emp.id)
                 e_.last_error = msg
                 s.commit()
-            await self.log("error", f"Task failed: {msg}", emp.id, task.project_id, task_id)
+            await self.log("error", f"Tapşırıq uğursuz oldu: {msg}", emp.id, task.project_id, task_id)
             await self.emit_task(task_id)
             await self.emit_employee(emp.id)
             await self.orchestrator.on_task_failed(task_id)
@@ -241,7 +241,7 @@ class AgentRuntime:
         async def on_event(kind: str, payload: Any) -> None:
             if kind == "block_start":
                 if payload == "thinking":
-                    await self._set_state(emp_id, "THINKING", task, f"Thinking: {task.title}")
+                    await self._set_state(emp_id, "THINKING", task, f"Düşünür: {task.title}")
                 elif payload in ("text", "tool_use", "server_tool_use"):
                     await self._set_state(emp_id, work_state, task, task.title)
             elif kind == "thinking":
@@ -250,9 +250,9 @@ class AgentRuntime:
                 buf.append(payload)
                 await flush()
             elif kind == "tool_start":
-                await self.log("tool", f"Preparing tool call: {payload}", emp_id, task.project_id, task.id)
+                await self.log("tool", f"Alət çağırışı hazırlanır: {payload}", emp_id, task.project_id, task.id)
             elif kind == "server_tool":
-                await self.log("tool", f"Server tool: {payload}", emp_id, task.project_id, task.id)
+                await self.log("tool", f"Server aləti: {payload}", emp_id, task.project_id, task.id)
 
         result = await llm.run_turn(system=system, messages=messages, tools=tools, effort=self._effort(task),
                                     on_event=on_event)
@@ -269,18 +269,18 @@ class AgentRuntime:
     async def _run_tool(self, ctx: ToolContext, tu: Any) -> dict[str, Any]:
         spec = REGISTRY.get(tu.name)
         if spec is None or spec.handler is None:
-            return {"type": "tool_result", "tool_use_id": tu.id, "is_error": True, "content": f"Unknown tool {tu.name}"}
+            return {"type": "tool_result", "tool_use_id": tu.id, "is_error": True, "content": f"Naməlum alət: {tu.name}"}
         err = tu.parse_error or validate_input(spec, tu.input)
         if err:
-            await self.log("tool", f"{tu.name}: invalid input ({err})", ctx.employee_id, ctx.project_id, ctx.task_id)
+            await self.log("tool", f"{tu.name}: yanlış giriş ({err})", ctx.employee_id, ctx.project_id, ctx.task_id)
             return {"type": "tool_result", "tool_use_id": tu.id, "is_error": True, "content": err}
         await self.log("tool", f"{tu.name}({_preview(tu.input)})", ctx.employee_id, ctx.project_id, ctx.task_id)
         try:
             out = await spec.handler(ctx, tu.input)
             return {"type": "tool_result", "tool_use_id": tu.id, "content": as_text(out)}
         except Exception as e:
-            await self.log("error", f"{tu.name} failed: {e}", ctx.employee_id, ctx.project_id, ctx.task_id)
-            return {"type": "tool_result", "tool_use_id": tu.id, "is_error": True, "content": f"Tool error: {e}"}
+            await self.log("error", f"{tu.name} xətası: {e}", ctx.employee_id, ctx.project_id, ctx.task_id)
+            return {"type": "tool_result", "tool_use_id": tu.id, "is_error": True, "content": f"Alət xətası: {e}"}
 
     # ---------------------------------------------------------------- agent-to-agent meeting
     async def consult(self, ctx: ToolContext, colleague_ref: str, question: str) -> str:
@@ -288,33 +288,33 @@ class AgentRuntime:
             col = find_employee(s, colleague_ref)
             asker = s.get(Employee, ctx.employee_id)
             if col is None:
-                return f"No colleague matches '{colleague_ref}'."
+                return f"'{colleague_ref}' adlı həmkar tapılmadı."
             if col.id == asker.id:
-                return "You cannot consult yourself."
+                return "Özünlə məsləhətləşə bilməzsən."
             busy = s.scalars(select(Task).where(Task.assignee_id == col.id, Task.status == "running")).first()
             if busy is not None or presence.live(col.id) is not None or col.paused:
-                return f"{col.name} is busy right now. Use send_message instead."
+                return f"{col.name} hazırda məşğuldur. Əvəzində send_message istifadə et."
             task = s.get(Task, ctx.task_id)
             col_system = prompts.system_prompt(col)
             col_id, col_name, asker_name = col.id, col.name, asker.name
-            proj_brief = prompts.task_brief(ctx.task_id, col.id).split("# Your task")[0]
+            proj_brief = prompts.task_brief(ctx.task_id, col.id).split("# Sənin tapşırığın")[0]
         await self.post_message(ctx.project_id, ctx.task_id, ctx.employee_id, col_id, "question", question, read=True)
         presence.set_live(ctx.employee_id, "IN_MEETING", task_id=ctx.task_id, project_id=ctx.project_id,
-                          detail=f"Meeting with {col_name}", with_employee_id=col_id)
+                          detail=f"{col_name} ilə iclas", with_employee_id=col_id)
         presence.set_live(col_id, "IN_MEETING", task_id=ctx.task_id, project_id=ctx.project_id,
-                          detail=f"Meeting with {asker_name}", with_employee_id=ctx.employee_id)
+                          detail=f"{asker_name} ilə iclas", with_employee_id=ctx.employee_id)
         await self.emit_employee(ctx.employee_id)
         await self.emit_employee(col_id)
         try:
             result = await llm.run_turn(
-                system=col_system + "\n\nA colleague has pulled you into a short meeting. Answer their question "
-                                    "directly and concisely from your expertise. No tools are available.",
-                messages=[{"role": "user", "content": f"{proj_brief}\n\n# Question from {asker_name}\n{question}"}],
+                system=col_system + "\n\nHəmkarın səni qısa iclasa çağırıb. Onun sualına öz peşəkarlığına əsaslanaraq "
+                                    "birbaşa və qısa cavab ver, Azərbaycan dilində. Alətlər mövcud deyil.",
+                messages=[{"role": "user", "content": f"{proj_brief}\n\n# {asker_name} soruşur\n{question}"}],
                 tools=[], effort="low")
             await self.record_usage(result, col_id, ctx.project_id, ctx.task_id, "consult")
-            answer = result.text.strip() or "(no answer)"
+            answer = result.text.strip() or "(cavab yoxdur)"
         except LLMError as e:
-            answer = f"Meeting failed: {e}"
+            answer = f"İclas baş tutmadı: {e}"
         finally:
             presence.clear_live(col_id)
             presence.set_live(ctx.employee_id, "WORKING", task_id=ctx.task_id, project_id=ctx.project_id,
@@ -322,7 +322,7 @@ class AgentRuntime:
             await self.emit_employee(col_id)
             await self.emit_employee(ctx.employee_id)
         await self.post_message(ctx.project_id, ctx.task_id, col_id, ctx.employee_id, "answer", answer, read=True)
-        return f"{col_name} says:\n{answer}"
+        return f"{col_name} deyir:\n{answer}"
 
 
 def _preview(data: Any, n: int = 140) -> str:

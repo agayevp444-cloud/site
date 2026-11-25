@@ -10,10 +10,10 @@ export function ArtifactView({ a }: { a: Artifact }) {
       <div className="mb-2 flex items-center justify-between">
         <div className="text-xs font-semibold text-white">{a.title}</div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-wider text-white/40">{a.kind.replace("_", " ")}</span>
+          <span className="text-[10px] uppercase tracking-wider text-white/40">{({ palette: "palitra", shot_list: "kadr siyahısı", lighting_diagram: "işıq sxemi", storyboard: "storiboard", timeline: "zaman xətti", sound_cues: "səs siyahısı", content_calendar: "məzmun təqvimi", table: "cədvəl", document: "sənəd", checklist: "yoxlama siyahısı", file: "fayl" } as Record<string, string>)[a.kind] ?? a.kind}</span>
           {a.file && (
             <a href={api.fileUrl(a.file)} className="text-[10px] font-semibold text-amber-300 hover:underline" download>
-              Download file
+              Faylı yüklə
             </a>
           )}
         </div>

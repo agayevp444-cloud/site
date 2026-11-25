@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { PRIORITY_COLOR, TASK_STATUS_COLOR, fmtTime, fmtUsd } from "@/lib/status";
+import { PRIORITY_AZ, PRIORITY_COLOR, TASK_STATUS_AZ, TASK_STATUS_COLOR, fmtTime, fmtUsd } from "@/lib/status";
 import { guarded, useOffice } from "@/lib/store";
 import type { Employee, LogEntry, Message, Task } from "@/lib/types";
 import { ArtifactView } from "./ArtifactView";
@@ -14,6 +14,7 @@ interface History {
 }
 
 type Tab = "overview" | "tasks" | "work" | "messages" | "logs" | "assign" | "profile";
+const TAB_AZ: Record<Tab, string> = { overview: "ümumi", tasks: "tapşırıqlar", work: "nəticələr", messages: "mesajlar", logs: "jurnal", assign: "tapşırıq ver", profile: "profil" };
 
 export function EmployeePanel() {
   const id = useOffice((s) => s.selectedEmployee);
@@ -47,7 +48,7 @@ export function EmployeePanel() {
   const logs = [...(hist?.logs ?? []), ...liveLogs.filter((l) => l.employee_id === emp.id)]
     .reduce<LogEntry[]>((acc, l) => (acc.some((x) => x.id === l.id) ? acc : [...acc, l]), []).sort((a, b) => b.id - a.id);
   const done = myTasks.filter((t) => t.status === "completed");
-  const name = (i: number | null) => (i == null ? "Owner" : employees[i]?.name ?? `#${i}`);
+  const name = (i: number | null) => (i == null ? "Sahib" : employees[i]?.name ?? `#${i}`);
 
   return (
     <div className="panel absolute right-3 top-16 bottom-20 z-30 flex w-[440px] max-w-[calc(100vw-1.5rem)] flex-col">
@@ -65,73 +66,73 @@ export function EmployeePanel() {
       </div>
       <div className="flex flex-wrap gap-2 border-b border-white/10 px-4 py-2">
         {emp.paused
-          ? <Button small variant="success" onClick={() => guarded(() => api.post(`/api/employees/${emp.id}/resume`))}>Resume agent</Button>
-          : <Button small onClick={() => guarded(() => api.post(`/api/employees/${emp.id}/pause`))}>Pause agent</Button>}
-        {current?.status === "running" && <Button small variant="danger" onClick={() => guarded(() => api.post(`/api/tasks/${current.id}/stop`))}>Stop current task</Button>}
-        {emp.last_error && <Button small variant="ghost" onClick={() => guarded(() => api.post(`/api/employees/${emp.id}/clear-error`))}>Clear error</Button>}
+          ? <Button small variant="success" onClick={() => guarded(() => api.post(`/api/employees/${emp.id}/resume`))}>Agenti davam etdir</Button>
+          : <Button small onClick={() => guarded(() => api.post(`/api/employees/${emp.id}/pause`))}>Agenti dayandır</Button>}
+        {current?.status === "running" && <Button small variant="danger" onClick={() => guarded(() => api.post(`/api/tasks/${current.id}/stop`))}>Cari tapşırığı dayandır</Button>}
+        {emp.last_error && <Button small variant="ghost" onClick={() => guarded(() => api.post(`/api/employees/${emp.id}/clear-error`))}>Xətanı təmizlə</Button>}
       </div>
       <div className="flex overflow-x-auto border-b border-white/10 text-[10px] font-semibold uppercase tracking-wider">
         {(["overview", "tasks", "work", "messages", "logs", "assign", "profile"] as Tab[]).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`px-2.5 py-2 whitespace-nowrap ${tab === t ? "text-amber-300 border-b-2 border-amber-400" : "text-white/50 hover:text-white"}`}>{t}</button>
+          <button key={t} onClick={() => setTab(t)} className={`px-2.5 py-2 whitespace-nowrap ${tab === t ? "text-amber-300 border-b-2 border-amber-400" : "text-white/50 hover:text-white"}`}>{TAB_AZ[t]}</button>
         ))}
       </div>
       <div className="flex-1 overflow-y-auto p-4 text-xs">
         {tab === "overview" && (
           <div className="space-y-4">
             <div>
-              <div className="label">Current task</div>
+              <div className="label">Cari tapşırıq</div>
               {current ? (
                 <button onClick={() => selectTask(current.id)} className="mt-1 w-full rounded-lg bg-white/[0.04] p-2.5 text-left hover:bg-white/[0.07]">
                   <div className="font-medium text-white">{current.title}</div>
-                  <div className="mt-1 text-[10px] text-white/50">Project: {project?.title ?? "—"} · <span style={{ color: TASK_STATUS_COLOR[current.status] }}>{current.status}</span></div>
+                  <div className="mt-1 text-[10px] text-white/50">Layihə: {project?.title ?? "—"} · <span style={{ color: TASK_STATUS_COLOR[current.status] }}>{TASK_STATUS_AZ[current.status]}</span></div>
                   <div className="mt-2 h-1.5 overflow-hidden rounded bg-white/10"><div className="h-full bg-emerald-400" style={{ width: `${Math.round(current.progress * 100)}%` }} /></div>
-                  <div className="mt-1 text-[10px] text-white/40">{Math.round(current.progress * 100)}% · started {fmtTime(current.started_at)}</div>
+                  <div className="mt-1 text-[10px] text-white/40">{Math.round(current.progress * 100)}% · başladı {fmtTime(current.started_at)}</div>
                 </button>
-              ) : <div className="mt-1 text-white/40">No active task.</div>}
+              ) : <div className="mt-1 text-white/40">Aktiv tapşırıq yoxdur.</div>}
             </div>
             {stream && Date.now() - stream.at < 15000 && (
               <div>
-                <div className="label">Live output</div>
+                <div className="label">Canlı çıxış</div>
                 <div className="mt-1 max-h-40 overflow-y-auto rounded-lg bg-black/50 p-2 font-mono text-[10px] text-emerald-200/90 whitespace-pre-wrap">{stream.text}</div>
               </div>
             )}
-            {emp.last_error && <div className="rounded-lg bg-red-500/10 p-2 text-red-300"><b>Last error:</b> {emp.last_error}</div>}
+            {emp.last_error && <div className="rounded-lg bg-red-500/10 p-2 text-red-300"><b>Son xəta:</b> {emp.last_error}</div>}
             <div className="grid grid-cols-3 gap-2">
-              <Metric label="Completed" value={hist?.metrics.tasks_completed ?? done.length} />
-              <Metric label="Failed" value={hist?.metrics.tasks_failed ?? myTasks.filter((t) => t.status === "failed").length} />
-              <Metric label="Revisions" value={hist?.metrics.revisions ?? myTasks.reduce((s, t) => s + t.revision_count, 0)} />
-              <Metric label="Avg time" value={hist?.metrics.avg_duration_s != null ? `${Math.round(hist.metrics.avg_duration_s)}s` : "—"} />
-              <Metric label="API cost" value={fmtUsd(myTasks.reduce((s, t) => s + t.cost_usd, 0))} />
-              <Metric label="Tools" value={emp.tools.length} />
+              <Metric label="Tamamlanıb" value={hist?.metrics.tasks_completed ?? done.length} />
+              <Metric label="Uğursuz" value={hist?.metrics.tasks_failed ?? myTasks.filter((t) => t.status === "failed").length} />
+              <Metric label="Revizyalar" value={hist?.metrics.revisions ?? myTasks.reduce((s, t) => s + t.revision_count, 0)} />
+              <Metric label="Orta müddət" value={hist?.metrics.avg_duration_s != null ? `${Math.round(hist.metrics.avg_duration_s)}s` : "—"} />
+              <Metric label="API xərci" value={fmtUsd(myTasks.reduce((s, t) => s + t.cost_usd, 0))} />
+              <Metric label="Alətlər" value={emp.tools.length} />
             </div>
-            <div><div className="label">Job description</div><p className="mt-1 text-white/70">{emp.job_description}</p></div>
+            <div><div className="label">İş təsviri</div><p className="mt-1 text-white/70">{emp.job_description}</p></div>
             {hist && hist.notes.length > 0 && (
-              <div><div className="label">Working memory</div>
+              <div><div className="label">İş yaddaşı</div>
                 {hist.notes.map((n, i) => <div key={i} className="mt-1 text-white/70"><b className="text-white/90">{n.key}:</b> {n.value}</div>)}</div>
             )}
           </div>
         )}
         {tab === "tasks" && (
           <div className="space-y-1.5">
-            {myTasks.length === 0 && <div className="text-white/40">No task history yet.</div>}
+            {myTasks.length === 0 && <div className="text-white/40">Hələ tapşırıq tarixçəsi yoxdur.</div>}
             {myTasks.map((t) => (
               <button key={t.id} onClick={() => selectTask(t.id)} className="w-full rounded-lg bg-white/[0.04] p-2 text-left hover:bg-white/[0.07]">
                 <div className="flex items-center justify-between gap-2"><span className="font-medium text-white">#{t.id} {t.title}</span>
-                  <Pill color={TASK_STATUS_COLOR[t.status]}>{t.status}</Pill></div>
-                <div className="mt-1 text-[10px] text-white/45">{projects[t.project_id]?.title} · <span style={{ color: PRIORITY_COLOR[t.priority] }}>{t.priority}</span> · {fmtTime(t.started_at)} → {fmtTime(t.completed_at)} · {fmtUsd(t.cost_usd)}</div>
+                  <Pill color={TASK_STATUS_COLOR[t.status]}>{TASK_STATUS_AZ[t.status]}</Pill></div>
+                <div className="mt-1 text-[10px] text-white/45">{projects[t.project_id]?.title} · <span style={{ color: PRIORITY_COLOR[t.priority] }}>{PRIORITY_AZ[t.priority]}</span> · {fmtTime(t.started_at)} → {fmtTime(t.completed_at)} · {fmtUsd(t.cost_usd)}</div>
               </button>
             ))}
           </div>
         )}
         {tab === "work" && (
           <div className="space-y-4">
-            {done.length === 0 && <div className="text-white/40">No completed work yet.</div>}
+            {done.length === 0 && <div className="text-white/40">Hələ tamamlanmış iş yoxdur.</div>}
             {done.map((t) => (
               <div key={t.id} className="space-y-2 rounded-lg border border-white/10 p-3">
                 <button onClick={() => selectTask(t.id)} className="text-left text-sm font-semibold text-amber-200 hover:underline">#{t.id} {t.title}</button>
                 {t.summary && <p className="text-white/60 italic">{t.summary}</p>}
                 {t.artifacts.map((a, i) => <ArtifactView key={i} a={a} />)}
-                <details><summary className="cursor-pointer text-white/50">Full deliverable</summary><div className="mt-2"><Markdown>{t.deliverable ?? ""}</Markdown></div></details>
+                <details><summary className="cursor-pointer text-white/50">Tam nəticə</summary><div className="mt-2"><Markdown>{t.deliverable ?? ""}</Markdown></div></details>
               </div>
             ))}
           </div>
@@ -139,7 +140,7 @@ export function EmployeePanel() {
         {tab === "messages" && (
           <div className="space-y-1.5">
             <OwnerMessage id={emp.id} />
-            {merged.length === 0 && <div className="text-white/40">No messages yet.</div>}
+            {merged.length === 0 && <div className="text-white/40">Hələ mesaj yoxdur.</div>}
             {merged.map((m) => (
               <div key={m.id} className="rounded-md bg-white/[0.04] p-2">
                 <div className="flex justify-between text-[10px] text-white/50"><span><b className="text-white/80">{name(m.from_id)}</b> → <b className="text-white/80">{name(m.to_id)}</b> · {m.kind}</span><span>{fmtTime(m.created_at)}</span></div>
@@ -150,7 +151,7 @@ export function EmployeePanel() {
         )}
         {tab === "logs" && (
           <div className="space-y-1 font-mono text-[10px]">
-            {logs.length === 0 && <div className="text-white/40">No activity yet.</div>}
+            {logs.length === 0 && <div className="text-white/40">Hələ fəaliyyət yoxdur.</div>}
             {logs.map((l) => (
               <div key={l.id} className={`rounded px-2 py-1 ${l.kind === "error" ? "bg-red-500/10 text-red-300" : l.kind === "thinking" ? "bg-violet-500/10 text-violet-200" : "bg-white/[0.03] text-white/70"}`}>
                 <span className="text-white/35">{fmtTime(l.created_at)} [{l.kind}]</span> <span className="whitespace-pre-wrap">{l.text}</span>
@@ -174,8 +175,8 @@ function OwnerMessage({ id }: { id: number }) {
   return (
     <form className="mb-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!text.trim()) return;
       guarded(async () => { await api.post(`/api/employees/${id}/message`, { content: text }); setText(""); }); }}>
-      <input className={inputCls} placeholder="Message this employee (read at their next task)…" value={text} onChange={(e) => setText(e.target.value)} />
-      <Button type="submit" variant="primary">Send</Button>
+      <input className={inputCls} placeholder="Bu işçiyə mesaj yazın (növbəti tapşırıqda oxuyacaq)…" value={text} onChange={(e) => setText(e.target.value)} />
+      <Button type="submit" variant="primary">Göndər</Button>
     </form>
   );
 }
@@ -192,25 +193,25 @@ function AssignForm({ emp }: { emp: Employee }) {
       guarded(async () => {
         await api.post(`/api/employees/${emp.id}/tasks`, { title, description: desc, priority, project_id: project === "" ? null : project });
         setTitle(""); setDesc("");
-        useOffice.getState().setToast(`Assigned to ${emp.name}`);
+        useOffice.getState().setToast(`${emp.name} üçün tapşırıq verildi`);
       }); }}>
-      <p className="text-white/50">Assign a task directly to {emp.name}. It runs as soon as they are free.</p>
-      <Field label="Title"><input required className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Write three tagline options" /></Field>
-      <Field label="Instructions"><textarea rows={5} className={inputCls} value={desc} onChange={(e) => setDesc(e.target.value)} /></Field>
+      <p className="text-white/50">{emp.name} üçün birbaşa tapşırıq verin. İşçi boşalan kimi icra olunacaq.</p>
+      <Field label="Başlıq"><input required className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="məs. Üç şüar variantı yaz" /></Field>
+      <Field label="Təlimat"><textarea rows={5} className={inputCls} value={desc} onChange={(e) => setDesc(e.target.value)} /></Field>
       <div className="grid grid-cols-2 gap-2">
-        <Field label="Priority">
+        <Field label="Prioritet">
           <select className={inputCls} value={priority} onChange={(e) => setPriority(e.target.value)}>
-            {["low", "medium", "high", "critical"].map((p) => <option key={p}>{p}</option>)}
+            {["low", "medium", "high", "critical"].map((p) => <option key={p} value={p}>{PRIORITY_AZ[p]}</option>)}
           </select>
         </Field>
-        <Field label="Project">
+        <Field label="Layihə">
           <select className={inputCls} value={project} onChange={(e) => setProject(e.target.value ? Number(e.target.value) : "")}>
-            <option value="">Direct assignment</option>
+            <option value="">Birbaşa tapşırıq</option>
             {open.map((p) => <option key={p.id} value={p.id}>#{p.id} {p.title}</option>)}
           </select>
         </Field>
       </div>
-      <Button type="submit" variant="primary">Assign task</Button>
+      <Button type="submit" variant="primary">Tapşırıq ver</Button>
     </form>
   );
 }
@@ -221,16 +222,16 @@ function ProfileForm({ emp, toolNames }: { emp: Employee; toolNames: string[] })
   useEffect(() => { setF({ name: emp.name, title: emp.title, department: emp.department, job_description: emp.job_description, system_prompt: emp.system_prompt, color: emp.color }); setTools(emp.tools); }, [emp.id]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <form className="space-y-3" onSubmit={(e) => { e.preventDefault();
-      guarded(async () => { await api.patch(`/api/employees/${emp.id}`, { ...f, tools }); useOffice.getState().setToast("Profile saved"); }); }}>
+      guarded(async () => { await api.patch(`/api/employees/${emp.id}`, { ...f, tools }); useOffice.getState().setToast("Profil yadda saxlanıldı"); }); }}>
       <div className="grid grid-cols-2 gap-2">
-        <Field label="Name"><input className={inputCls} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
-        <Field label="Role / title"><input className={inputCls} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
-        <Field label="Department"><input className={inputCls} value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></Field>
-        <Field label="Colour"><input type="color" className="h-9 w-full rounded bg-transparent" value={f.color} onChange={(e) => setF({ ...f, color: e.target.value })} /></Field>
+        <Field label="Ad"><input className={inputCls} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
+        <Field label="Rol / vəzifə"><input className={inputCls} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
+        <Field label="Şöbə"><input className={inputCls} value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} /></Field>
+        <Field label="Rəng"><input type="color" className="h-9 w-full rounded bg-transparent" value={f.color} onChange={(e) => setF({ ...f, color: e.target.value })} /></Field>
       </div>
-      <Field label="Job description"><textarea rows={3} className={inputCls} value={f.job_description} onChange={(e) => setF({ ...f, job_description: e.target.value })} /></Field>
-      <Field label="System prompt"><textarea rows={8} className={`${inputCls} font-mono text-[11px]`} value={f.system_prompt} onChange={(e) => setF({ ...f, system_prompt: e.target.value })} /></Field>
-      <Field label="Tools">
+      <Field label="İş təsviri"><textarea rows={3} className={inputCls} value={f.job_description} onChange={(e) => setF({ ...f, job_description: e.target.value })} /></Field>
+      <Field label="Sistem promptu"><textarea rows={8} className={`${inputCls} font-mono text-[11px]`} value={f.system_prompt} onChange={(e) => setF({ ...f, system_prompt: e.target.value })} /></Field>
+      <Field label="Alətlər">
         <div className="flex flex-wrap gap-1.5">
           {toolNames.map((t) => (
             <button type="button" key={t} onClick={() => setTools(tools.includes(t) ? tools.filter((x) => x !== t) : [...tools, t])}
@@ -239,10 +240,10 @@ function ProfileForm({ emp, toolNames }: { emp: Employee; toolNames: string[] })
         </div>
       </Field>
       <div className="flex gap-2">
-        <Button type="submit" variant="primary">Save profile</Button>
+        <Button type="submit" variant="primary">Profili saxla</Button>
         {!emp.is_director && (
-          <Button variant="ghost" onClick={() => confirm(`${emp.active ? "Deactivate" : "Reactivate"} ${emp.name}?`) &&
-            guarded(() => api.patch(`/api/employees/${emp.id}`, { active: !emp.active }))}>{emp.active ? "Deactivate" : "Reactivate"}</Button>
+          <Button variant="ghost" onClick={() => confirm(`${emp.name} ${emp.active ? "deaktiv edilsin" : "yenidən aktiv edilsin"}?`) &&
+            guarded(() => api.patch(`/api/employees/${emp.id}`, { active: !emp.active }))}>{emp.active ? "Deaktiv et" : "Aktiv et"}</Button>
         )}
       </div>
     </form>
