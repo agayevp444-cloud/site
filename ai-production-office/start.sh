@@ -4,13 +4,24 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 
-command -v python3 >/dev/null || { echo "Python 3.10+ lazımdır: brew install python@3.12"; exit 1; }
+# macOS-un öz Python-u (3.9) köhnədir; ən yeni uyğun versiyanı seçirik.
+PY=""
+for c in python3.13 python3.12 python3.11 python3.10 /opt/homebrew/bin/python3.12 python3; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+    PY="$c"; break
+  fi
+done
+[ -n "$PY" ] || { echo "Python 3.10+ lazımdır: brew install python@3.12"; exit 1; }
 command -v node >/dev/null || { echo "Node.js 20+ lazımdır: brew install node"; exit 1; }
 
 # --- backend
+# Köhnə Python ilə yaradılmış mühit varsa, onu yenidən qururuq.
+if [ -d backend/.venv ] && ! backend/.venv/bin/python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+  rm -rf backend/.venv
+fi
 if [ ! -d backend/.venv ]; then
-  echo "▶ Python virtual mühiti yaradılır..."
-  python3 -m venv backend/.venv
+  echo "▶ Python virtual mühiti yaradılır ($("$PY" --version))..."
+  "$PY" -m venv backend/.venv
 fi
 backend/.venv/bin/pip install -q -r backend/requirements.txt
 [ -f backend/.env ] || cp backend/.env.example backend/.env
